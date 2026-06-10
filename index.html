@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>汽车报价查询</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f0f2f5;min-height:100vh}
+.header{background:linear-gradient(135deg,#1a237e,#283593);color:#fff;padding:12px 16px;text-align:center;position:sticky;top:0;z-index:100}
+.header h1{font-size:1.1rem;font-weight:600}
+.search-bar{position:sticky;top:48px;z-index:99;background:#fff;padding:8px 12px;display:flex;gap:6px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.search-bar input{flex:1;padding:9px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:.9rem;background:#f5f5f5}
+.search-bar input:focus{outline:none;border-color:#1a237e;background:#fff}
+.search-bar select{padding:9px 4px;border:1px solid #e0e0e0;border-radius:8px;font-size:.8rem;background:#f5f5f5;max-width:85px}
+.stats{display:flex;gap:8px;padding:10px 12px}
+.stat{flex:1;background:#fff;border-radius:10px;padding:10px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.stat .v{font-size:1.3rem;font-weight:700;color:#1a237e}
+.stat .l{font-size:.7rem;color:#999;margin-top:2px}
+.list{padding:0 12px}
+.card{background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card .top{display:flex;justify-content:space-between;align-items:flex-start}
+.card .m{font-size:.95rem;font-weight:600;color:#333}
+.card .fob{font-size:1.1rem;font-weight:700;color:#c62828;white-space:nowrap}
+.card .info{font-size:.75rem;color:#666;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.card .info span{background:#f5f5f5;padding:2px 7px;border-radius:4px}
+.card .guide{text-decoration:line-through;color:#aaa}
+.tag{display:inline-block;padding:1px 5px;border-radius:3px;font-size:.65rem;font-weight:600}
+.t-fob{background:#e3f2fd;color:#1565c0}
+.t-cif{background:#fce4ec;color:#c62828}
+.u-rmb{background:#e8f5e9;color:#2e7d32}
+.u-usd{background:#fff3e0;color:#e65100}
+.gh{background:#e8eaf6;padding:7px 14px;margin:6px 12px 2px;border-radius:8px;font-size:.8rem;font-weight:700;color:#1a237e}
+.pages{display:flex;justify-content:center;gap:8px;padding:12px}
+.pages button{padding:8px 16px;border:1px solid #ddd;background:#fff;border-radius:8px;font-size:.85rem;cursor:pointer}
+.pages button:active{background:#1a237e;color:#fff}
+.pages span{padding:8px;font-size:.85rem}
+.empty{text-align:center;padding:60px 20px;color:#999}
+.footer{text-align:center;padding:16px;font-size:.7rem;color:#bbb}
+</style>
+</head>
+<body>
+
+<div class="header"><h1>🚗 汽车出口报价查询</h1></div>
+<div class="search-bar">
+  <input type="text" id="q" placeholder="搜车型/品牌/版本..." oninput="render()" autofocus>
+  <select id="fb" onchange="render()"><option value="">全部</option></select>
+</div>
+<div class="stats" id="stats"></div>
+<div class="list" id="list"></div>
+<div class="pages" id="pages"></div>
+<div class="empty" id="empty"><div style="font-size:3rem">📭</div><p>未找到匹配结果</p></div>
+<div class="footer">数据来源：报价文件夹 · 最后更新 2026-06-09</div>
+
+<script>
+// ===== 报价数据 =====
+var DATA = [{"s": "Changan", "m": "2026款CS75 PRO", "v": "", "e": "", "g": null, "f": 11000.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "grey/white"}, {"s": "Changan", "m": "2026款UNIZ燃油", "v": "", "e": "", "g": null, "f": 12200.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "grey"}, {"s": "Changan", "m": "第四代CS55PLUS", "v": "", "e": "", "g": null, "f": 12900.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "grey"}, {"s": "Changan x5plus", "m": "Beyond PRO PRO/989", "v": "", "e": "", "g": null, "f": 10000.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "Gray/black/white"}, {"s": "Changan x5plus", "m": "Excellence PRO/1039", "v": "", "e": "", "g": null, "f": 10800.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "Gray/black/white"}, {"s": "Changan x5plus", "m": "Pioneer PRO/959", "v": "", "e": "", "g": null, "f": 9600.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "Gray/black/white"}, {"s": "Changan x5plus", "m": "manual/699", "v": "", "e": "", "g": null, "f": 8300.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "Gray/black/white"}, {"s": "Kaiyi x3 pro", "m": "CVT Deluxe", "v": "", "e": "", "g": null, "f": 8100.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "grey/white"}, {"s": "Kaiyi x3 pro", "m": "CVT supreme", "v": "", "e": "", "g": null, "f": 7900.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "grey/white"}, {"s": "Kaiyi x3 pro", "m": "MT  Deluxe", "v": "", "e": "", "g": null, "f": 7700.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "grey/white"}, {"s": "Kaiyi x3 pro", "m": "MT  supreme", "v": "", "e": "", "g": null, "f": 7500.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "grey/white"}, {"s": "Livan x3pro", "m": "CVT", "v": "", "e": "", "g": null, "f": 53500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "Gray/White"}, {"s": "Livan x3pro", "m": "MT+sunroof", "v": "", "e": "", "g": null, "f": 48500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "Gray/White"}, {"s": "Livan x3pro （new color）", "m": "CVT", "v": "", "e": "", "g": null, "f": 54000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "black/White and black/sliver"}, {"s": "Livan x3pro （new color）", "m": "MT+sunroof", "v": "", "e": "", "g": null, "f": 49000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "black/White and black/sliver"}, {"s": "MG 5 墨西哥版", "m": "MG5 MCE-1.5L-MT-EU5 -2024-COM-MX", "v": "", "e": "", "g": null, "f": 7200.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "Silver/white/black"}, {"s": "MG 5/697", "m": "2023 180DVVT MT Youth style edition", "v": "", "e": "", "g": null, "f": 7600.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "white/grey"}, {"s": "MG 5/ZS", "m": "CVT", "v": "", "e": "", "g": null, "f": 11000.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "SILVER"}, {"s": "Trumpchi GS3", "m": "JIN Enjoy 劲享898", "v": "", "e": "", "g": null, "f": 9500.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "Silver/Gray/White"}, {"s": "Trumpchi GS3", "m": "R-Style/06", "v": "", "e": "", "g": null, "f": 11500.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "Silver/Gray/blue"}, {"s": "Trumpchi GS3", "m": "jin pick劲取版798", "v": "", "e": "", "g": null, "f": 8400.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "Silver/Gray/White"}, {"s": "Trumpchi GS3", "m": "jin smart 劲智998", "v": "", "e": "", "g": null, "f": 10900.0, "u": "USD", "t": "FOB", "p": "南沙", "c": "Silver/Gray/White"}, {"s": "捷途 JETOUR", "m": "DASHING", "v": "1.5T+6DCT V1", "e": "1.5T+6DCT V1", "g": null, "f": 13300.0, "u": "USD", "t": "FOB", "p": "上海", "c": "外:灰白 内:新卡其白、新碳晶黑、幻影灰、科技灰、极光绿、血石红"}, {"s": "捷途 JETOUR", "m": "DASHING", "v": "1.5T+6DCT V2", "e": "1.5T+6DCT V2", "g": null, "f": 14100.0, "u": "USD", "t": "FOB", "p": "上海", "c": "外:灰白、黑红 内:"}, {"s": "捷途 JETOUR", "m": "DASHING", "v": "1.5T+6DCT V3", "e": "1.5T+6DCT V3", "g": null, "f": 15100.0, "u": "USD", "t": "FOB", "p": "上海", "c": "外:灰白、黑红 内:"}, {"s": "捷途 JETOUR", "m": "DASHING", "v": "1.6T+7DCT V5", "e": "1.6T+7DCT V5", "g": null, "f": 16300.0, "u": "USD", "t": "FOB", "p": "上海", "c": "外:灰白、黑红 内:"}, {"s": "捷途 JETOUR", "m": "G700", "v": "2.0TD+Dual PHEV V3", "e": "2.0TD+Dual PHEV V3", "g": null, "f": 45600.0, "u": "USD", "t": "FOB", "p": "上海", "c": "外:黑米、黑橙 内:"}, {"s": "捷途 JETOUR", "m": "G700", "v": "V2", "e": "V2", "g": null, "f": 42600.0, "u": "USD", "t": "FOB", "p": "上海", "c": "外:黑米、黑橙 内:新卡其白、新碳晶黑、极野仙棕、卡布里蓝、哑光雪银（+600美元）、朝霞橙（+600美元）"}, {"s": "捷途 JETOUR", "m": "T1", "v": "1.5T+7DCT V2", "e": "1.5T+7DCT V2", "g": null, "f": 17400.0, "u": "USD", "t": "FOB", "p": "上海", "c": "外:黑橙、黑灰、黑绿 内:新碳晶黑、航空银、沙金、新卡其白、公路灰（+600美元）"}, {"s": "捷途 JETOUR", "m": "T1", "v": "1.5T+7DCT V3", "e": "1.5T+7DCT V3", "g": null, "f": 18400.0, "u": "USD", "t": "FOB", "p": "上海", "c": "外:黑橙、黑灰、黑绿 内:"}, {"s": "捷途 JETOUR", "m": "T1", "v": "2.0T+8AT V5", "e": "2.0T+8AT V5", "g": null, "f": 20600.0, "u": "USD", "t": "FOB", "p": "上海", "c": "外:黑橙、黑灰、黑绿 内:"}, {"s": "捷途 JETOUR", "m": "T2", "v": "1.5T+7DCT V2", "e": "1.5T+7DCT V2", "g": null, "f": 19300.0, "u": "USD", "t": "FOB", "p": "上海", "c": "外:黑红、绿橙 内:新碳晶黑、航空银、新卡其白、公路灰（+600美元）、电镀绿（+600美元）"}, {"s": "捷途 JETOUR", "m": "T2", "v": "2.0T+7DCT V4", "e": "2.0T+7DCT V4", "g": null, "f": 22800.0, "u": "USD", "t": "FOB", "p": "上海", "c": "外:棕色、绿橙 内:"}, {"s": "捷途 JETOUR", "m": "X50", "v": "1.5L+5MT", "e": "1.5L+5MT", "g": null, "f": 10800.0, "u": "USD", "t": "FOB", "p": "上海", "c": "外:黑红、蓝灰 内:新碳晶黑、幻影灰、新卡其白、航空银、上黑下白（+250美元）"}, {"s": "捷途 JETOUR", "m": "X50", "v": "1.5T+6DCT", "e": "1.5T+6DCT", "g": null, "f": 12200.0, "u": "USD", "t": "FOB", "p": "上海", "c": "外:黑红、蓝灰 内:"}, {"s": "捷途 JETOUR", "m": "X70FL", "v": "1.5T+6DCT V2", "e": "1.5T+6DCT V2", "g": null, "f": 12800.0, "u": "USD", "t": "FOB", "p": "上海", "c": "外:黑内、黑灰 内:星空黑、新卡其白、科技灰、未来蓝"}, {"s": "捷途 JETOUR", "m": "X70FL", "v": "1.5T+6DCT V3", "e": "1.5T+6DCT V3", "g": null, "f": 13800.0, "u": "USD", "t": "FOB", "p": "上海", "c": "外:黑内、黑灰 内:"}, {"s": "捷途 JETOUR", "m": "X70PLUS", "v": "1.5T+6DCT V2", "e": "1.5T+6DCT V2", "g": null, "f": 15300.0, "u": "USD", "t": "FOB", "p": "上海", "c": "外:黑内、黑红 内:星空黑、新卡其白、幻影灰、深海蓝、未来蓝"}, {"s": "捷途 JETOUR", "m": "X70PLUS", "v": "1.6T+7DCT V4", "e": "1.6T+7DCT V4", "g": null, "f": 16600.0, "u": "USD", "t": "FOB", "p": "上海", "c": "外:黑红、棕米 内:"}, {"s": "比亚迪 2025款汉DM-i非智驾", "m": "125KM尊贵型(豪华座椅)", "v": "125KM尊贵型(豪华座椅)", "e": "", "g": 175800.0, "f": 115000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "时光灰、未央灰、玄空黑、银釉白"}, {"s": "比亚迪 2026款宋L DM-i", "m": "130KM超越型", "v": "130KM超越型", "e": "", "g": 139800.0, "f": 131500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "润玉白（暮云灰）"}, {"s": "比亚迪 2026款海豹07DM-i", "m": "1.5T 135KM尊贵型", "v": "1.5T 135KM尊贵型", "e": "", "g": 159800.0, "f": 144000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "暖色烟茶（流光灰）、暖色烟茶（美态香红）、亚特兰蒂斯灰（流光灰）、亚特兰蒂斯灰（美态香红）、曜石黑（流光灰）、曜石黑（美态香红）、云海灰（流光灰）、云海灰（美态香红）"}, {"s": "比亚迪 2026款海豹07DM-i", "m": "1.5T 230KM尊荣型", "v": "1.5T 230KM尊荣型", "e": "", "g": 169800.0, "f": 152800.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "暖色烟茶（流光灰）、亚特兰蒂斯灰（流光灰）、亚特兰蒂斯灰（美态香红）、曜石黑（流光灰）、曜石黑（美态香红）、云海灰（流光灰）、云海灰（美态香红）"}, {"s": "比亚迪 E5（26年）", "m": "530舒享版", "v": "530舒享版", "e": "", "g": 95800.0, "f": 84600.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "时空白（黑色内饰）、银河灰（黑色内饰）"}, {"s": "比亚迪 E7（26年）", "m": "520进阶版", "v": "520进阶版", "e": "", "g": 105800.0, "f": 93800.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "水白晶（黑色内饰）、时光灰（黑色内饰）"}, {"s": "比亚迪 E9（26年）", "m": "535豪华版", "v": "535豪华版", "e": "", "g": 151800.0, "f": 124500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "曜石黑（棕色内饰）"}, {"s": "比亚迪 M9（26年）", "m": "豪华版", "v": "豪华版", "e": "", "g": 195800.0, "f": 164500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "玄空黑（黑色内饰）、润玉白（黑色内饰）"}, {"s": "比亚迪 唐DM-i智驾版", "m": "115KM尊贵型", "v": "115KM尊贵型", "e": "", "g": 179800.0, "f": 141300.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "山脉灰、未央灰、银砂黑、银釉白"}, {"s": "比亚迪 唐DM-i智驾版", "m": "115KM旗舰型", "v": "115KM旗舰型", "e": "", "g": 199800.0, "f": 152400.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "山脉灰、未央灰、银砂黑、银釉白"}, {"s": "比亚迪 唐DM-i智驾版", "m": "115MK尊荣型", "v": "115MK尊荣型", "e": "", "g": 189800.0, "f": 14900.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "山脉灰、未央灰、银砂黑、银釉白"}, {"s": "比亚迪 夏", "m": "180KM卓越型（檀棕米双色）", "v": "180KM卓越型（檀棕米双色）", "e": "", "g": 309800.0, "f": 249600.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "润玉白、玄空黑"}, {"s": "比亚迪 宋L DM-i智驾版", "m": "112KM超越型", "v": "112KM超越型", "e": "", "g": 155800.0, "f": 121900.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "冰珀青、茶晶灰、润玉白、曜石黑"}, {"s": "比亚迪 宋L DM-i智驾版", "m": "112KM领先型", "v": "112KM领先型", "e": "", "g": 145800.0, "f": 113500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "冰珀青、茶晶灰、润玉白、曜石黑"}, {"s": "比亚迪 宋L DM-i非智驾", "m": "112KM超越型", "v": "112KM超越型", "e": "", "g": 155800.0, "f": 105000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "冰珀青、茶晶灰、法翠蓝、润玉白"}, {"s": "比亚迪 宋L DM-i非智驾", "m": "112KM领先型", "v": "112KM领先型", "e": "", "g": 145800.0, "f": 96800.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "冰珀青、茶晶灰、润玉白"}, {"s": "比亚迪 宋L DM-i非智驾", "m": "75KM领先型", "v": "75KM领先型", "e": "", "g": 135800.0, "f": 97600.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "冰珀青、茶晶灰、润玉白"}, {"s": "比亚迪 宋Pro DM-i智驾版", "m": "115KM卓越型", "v": "115KM卓越型", "e": "", "g": 132800.0, "f": 112200.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "时光灰、雪域白、曜石黑、远山青"}, {"s": "比亚迪 宋Pro DM-i智驾版", "m": "115KM超越型", "v": "115KM超越型", "e": "", "g": 122800.0, "f": 103800.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "时光灰、雪域白、曜石黑、远山青"}, {"s": "比亚迪 宋Pro DM-i智驾版", "m": "75KM超越型", "v": "75KM超越型", "e": "", "g": 112800.0, "f": 95500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "时光灰、雪域白、曜石黑、远山青"}, {"s": "比亚迪 宋Pro DM-i智驾版", "m": "75KM领先型", "v": "75KM领先型", "e": "", "g": 102800.0, "f": 89700.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "时光灰、雪域白、曜石黑、远山青"}, {"s": "比亚迪 宋Pro DM-i荣耀版非智驾", "m": "110KM卓越型(净月米)", "v": "110KM卓越型(净月米)", "e": "", "g": 139800.0, "f": 101600.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "时光灰、雪域白"}, {"s": "比亚迪 宋Pro DM-i荣耀版非智驾", "m": "110KM超越型(净月米)", "v": "110KM超越型(净月米)", "e": "", "g": 129800.0, "f": 94000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "黑骑士、时光灰、雪域白"}, {"s": "比亚迪 宋plus  DMI 智驾", "m": "112KM 尊荣型", "v": "112KM 尊荣型", "e": "", "g": 155800.0, "f": 126000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "苍烟色、德兰黑、时光灰、雪域白"}, {"s": "比亚迪 宋plus  DMI 智驾", "m": "112KM 尊贵型", "v": "112KM 尊贵型", "e": "", "g": 145800.0, "f": 116800.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "时光灰、雪域白"}, {"s": "比亚迪 汉DM-i智驾版", "m": "125KM尊荣型", "v": "125KM尊荣型", "e": "", "g": 195800.0, "f": 163000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "颜色齐全"}, {"s": "比亚迪 汉DM-i智驾版", "m": "125KM尊贵型", "v": "125KM尊贵型", "e": "", "g": 185800.0, "f": 15700.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "颜色齐全"}, {"s": "比亚迪 汉DM-i智驾版", "m": "245KM尊荣型", "v": "245KM尊荣型", "e": "", "g": 189800.0, "f": 165500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "颜色齐全"}, {"s": "比亚迪 汉L DM", "m": "200KM激光雷达尊享型", "v": "200KM激光雷达尊享型", "e": "", "g": 209800.0, "f": 180700.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "锋刃灰（绸缎棕）、锋刃灰（云锦灰）"}, {"s": "比亚迪 汉L DM", "m": "200KM激光雷达旗舰型", "v": "200KM激光雷达旗舰型", "e": "", "g": 229800.0, "f": 194700.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "琉光银（绸缎棕）、琉光银（云锦灰）、锋刃灰（绸缎棕）、锋刃灰（云锦灰）、玄甲黑（云锦灰）"}, {"s": "比亚迪 汉L DM", "m": "四驱激光雷达旗舰型", "v": "四驱激光雷达旗舰型", "e": "", "g": 259800.0, "f": 213500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "墨竹青（绸缎棕）"}, {"s": "比亚迪 海狮05DMI （智驾）", "m": "115KM尊荣型", "v": "115KM尊荣型", "e": "", "g": 122800.0, "f": 106500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "苍烟色、雪域白、时光灰"}, {"s": "比亚迪 海狮05DMI （智驾）", "m": "115KM旗舰型", "v": "115KM旗舰型", "e": "", "g": 132800.0, "f": 115000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "苍烟色、雪域白、时光灰、曜石黑"}, {"s": "比亚迪 海狮05DMI （智驾）", "m": "75KM尊贵型", "v": "75KM尊贵型", "e": "", "g": 112800.0, "f": 98000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "苍烟色、雪域白、时光灰、曜石黑"}, {"s": "比亚迪 海狮05DMI （智驾）", "m": "75KM豪华型", "v": "75KM豪华型", "e": "", "g": 102800.0, "f": 89600.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "雪域白、时光灰、曜石黑"}, {"s": "比亚迪 海狮05EV", "m": "520智航版", "v": "520智航版", "e": "", "g": 127800.0, "f": 120700.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "沐川青、海域白、钧窑灰、暖阳白"}, {"s": "比亚迪 海狮06DM-i", "m": "121领航版", "v": "121领航版", "e": "", "g": 139800.0, "f": 125500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "苍烟色、海域青、暖阳白、雪域白、云海灰"}, {"s": "比亚迪 海狮06DM-i", "m": "170领航PRO版", "v": "170领航PRO版", "e": "", "g": 146800.0, "f": 133200.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "苍烟色、海域青、暖阳白、雪域白、云海灰"}, {"s": "比亚迪 海狮06EV", "m": "520领航版", "v": "520领航版", "e": "", "g": 143800.0, "f": 130000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "苍烟色（海韵灰）、苍烟色（耀夜黑）、海域青（海韵灰）、暖阳白（海韵灰）、暖阳白（耀夜黑）、雪域白（海韵灰）、雪域白（耀夜黑）、云海灰（ 海韵灰）、云海灰（耀夜黑）"}, {"s": "比亚迪 海狮06EV", "m": "605领航Plus版", "v": "605领航Plus版", "e": "", "g": 163800.0, "f": 149000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "苍烟色（海韵灰）、苍烟色（耀夜黑）、暖阳白（海韵灰）、暖阳白（耀夜黑）、雪域白（耀夜黑）、云海灰（ 海韵灰）、云海灰（耀夜黑）"}, {"s": "比亚迪 海狮06EV", "m": "605领航Pro版", "v": "605领航Pro版", "e": "", "g": 153800.0, "f": 139500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "海域青（耀夜黑）、暖阳白（海韵灰）、暖阳白（耀夜黑）、雪域白（海韵灰）、雪域白（耀夜黑）、云海灰（ 海韵灰）"}, {"s": "比亚迪 海狮07DM-i", "m": "150领航+版", "v": "150领航+版", "e": "", "g": 179800.0, "f": 164100.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "苍烟色、曜石黑"}, {"s": "比亚迪 海狮07DM-i", "m": "150领航版", "v": "150领航版", "e": "", "g": 169800.0, "f": 156200.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "亚特兰蒂斯灰、苍烟色、曜石黑"}, {"s": "比亚迪 海豹05DM-i智驾版", "m": "120KM旗舰型", "v": "120KM旗舰型", "e": "", "g": 103800.0, "f": 87700.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "魔域黑、时光灰、雪域白、亚特兰蒂斯灰"}, {"s": "比亚迪 海豹05DM-i智驾版", "m": "55KM尊贵型", "v": "55KM尊贵型", "e": "", "g": 93800.0, "f": 79500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "魔域黑、时光灰、雪域白、亚特兰蒂斯灰"}, {"s": "比亚迪 海豹05DM-i智驾版", "m": "55KM豪华型", "v": "55KM豪华型", "e": "", "g": 79800.0, "f": 67200.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "魔域黑、时光灰、雪域白、亚特兰蒂斯灰"}, {"s": "比亚迪 海豹06 GT", "m": "505海浪Plus版", "v": "505海浪Plus版", "e": "", "g": 146800.0, "f": 130900.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "颜色齐全"}, {"s": "比亚迪 海豹06 GT", "m": "505海浪版", "v": "505海浪版", "e": "", "g": 136800.0, "f": 121600.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "颜色齐全"}, {"s": "比亚迪 海豹06DM-i旅行版", "m": "80KM尊贵型", "v": "80KM尊贵型", "e": "", "g": 109800.0, "f": 100300.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "暖色烟茶、沁海绿、雪域白、亚特兰蒂斯灰"}, {"s": "比亚迪 海豹06DM-i智驾版", "m": "120KM尊享型", "v": "120KM尊享型", "e": "", "g": 129800.0, "f": 105700.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "暖色烟茶、沁海绿、雪域白、亚特兰蒂斯灰"}, {"s": "比亚迪 海豹06DM-i智驾版", "m": "120KM尊荣型", "v": "120KM尊荣型", "e": "", "g": 119800.0, "f": 99000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "暖色烟茶、沁海绿、雪域白、亚特兰蒂斯灰"}, {"s": "比亚迪 海豹06DM-i智驾版", "m": "120KM旗舰型", "v": "120KM旗舰型", "e": "", "g": 139800.0, "f": 114000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "暖色烟茶、雪域白、亚特兰蒂斯灰"}, {"s": "比亚迪 海豹06DM-i智驾版", "m": "80KM尊贵型", "v": "80KM尊贵型", "e": "", "g": 109800.0, "f": 93200.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "暖色烟茶、沁海绿、雪域白、亚特兰蒂斯灰"}, {"s": "比亚迪 海豹06DM-i智驾版", "m": "80KM豪华型", "v": "80KM豪华型", "e": "", "g": 99800.0, "f": 84500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "暖色烟茶、沁海绿、雪域白、亚特兰蒂斯灰"}, {"s": "比亚迪 海豹06DM-i非智驾", "m": "120KM尊享型", "v": "120KM尊享型", "e": "", "g": 129800.0, "f": 89500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "暖色烟茶、沁海绿、雪域白、亚特兰蒂斯灰"}, {"s": "比亚迪 海豹06DM-i非智驾", "m": "120KM尊荣型", "v": "120KM尊荣型", "e": "", "g": 119800.0, "f": 81400.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "暖色烟茶、雪域白、亚特兰蒂斯灰"}, {"s": "比亚迪 海豹06DM-i非智驾", "m": "120KM旗舰型", "v": "120KM旗舰型", "e": "", "g": 139800.0, "f": 96800.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "暖色烟茶、沁海绿、雪域白、亚特兰蒂斯灰"}, {"s": "比亚迪 海豹06DM-i非智驾", "m": "80KM尊贵型", "v": "80KM尊贵型", "e": "", "g": 109800.0, "f": 73500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "暖色烟茶、雪域白、亚特兰蒂斯灰"}, {"s": "比亚迪 海豹06DMi超享版", "m": "128KM智享型", "v": "128KM智享型", "e": "", "g": 106800.0, "f": 96200.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "颜色齐全"}, {"s": "比亚迪 海豹06DMi超享版", "m": "128KM豪华型", "v": "128KM豪华型", "e": "", "g": 96800.0, "f": 87200.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "颜色齐全"}, {"s": "比亚迪 秦L DM-i智驾版", "m": "120KM卓越型", "v": "120KM卓越型", "e": "", "g": 139800.0, "f": 11400.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "冰珀青、茶晶灰、建窑紫、润玉白"}, {"s": "比亚迪 秦L DM-i智驾版", "m": "120KM超越型", "v": "120KM超越型", "e": "", "g": 129800.0, "f": 105600.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "冰珀青、茶晶灰、建窑紫、润玉白"}, {"s": "比亚迪 秦L DM-i智驾版", "m": "120KM领先型", "v": "120KM领先型", "e": "", "g": 119800.0, "f": 99000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "冰珀青、茶晶灰、建窑紫、润玉白"}, {"s": "比亚迪 秦L DM-i智驾版", "m": "80KM超越型", "v": "80KM超越型", "e": "", "g": 109800.0, "f": 92900.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "冰珀青、茶晶灰、建窑紫、润玉白"}, {"s": "比亚迪 秦L DM-i智驾版", "m": "80KM领先型", "v": "80KM领先型", "e": "", "g": 99800.0, "f": 84500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "冰珀青、茶晶灰、建窑紫、润玉白"}, {"s": "比亚迪 秦L DM-i非智驾", "m": "120KM卓越型", "v": "120KM卓越型", "e": "", "g": 139800.0, "f": 97500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "冰珀青、茶晶灰、润玉白"}, {"s": "比亚迪 秦L DM-i非智驾", "m": "120KM超越型", "v": "120KM超越型", "e": "", "g": 129800.0, "f": 89300.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "冰珀青、茶晶灰、建窑紫、润玉白"}, {"s": "比亚迪 秦L DM-i非智驾", "m": "120KM领先型", "v": "120KM领先型", "e": "", "g": 119800.0, "f": 81500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "冰珀青、茶晶灰、润玉白"}, {"s": "比亚迪 秦L DM-i非智驾", "m": "80KM超越型", "v": "80KM超越型", "e": "", "g": 109800.0, "f": 73500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "冰珀青、茶晶灰、润玉白"}, {"s": "比亚迪 秦L DM-i非智驾", "m": "80KM领先型", "v": "80KM领先型", "e": "", "g": 99800.0, "f": 64500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "润玉白"}, {"s": "比亚迪 秦L EV", "m": "470KM领先型", "v": "470KM领先型", "e": "", "g": 119800.0, "f": 99800.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "颜色齐全"}, {"s": "比亚迪 秦L EV", "m": "545KM云辇型", "v": "545KM云辇型", "e": "", "g": 139800.0, "f": 118900.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "颜色齐全"}, {"s": "比亚迪 秦L EV", "m": "545KM超越型", "v": "545KM超越型", "e": "", "g": 129800.0, "f": 109500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "颜色齐全"}, {"s": "比亚迪 第二代 宋ProDM-i非智驾", "m": "115KM卓越型", "v": "115KM卓越型", "e": "", "g": 142800.0, "f": 103500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "时光灰、玄武黑、雪域白"}, {"s": "比亚迪 第二代 宋ProDM-i非智驾", "m": "115KM超越型", "v": "115KM超越型", "e": "", "g": 132800.0, "f": 95000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "雪域白、远山青"}, {"s": "比亚迪 第二代 宋ProDM-i非智驾", "m": "75KM超越型", "v": "75KM超越型", "e": "", "g": 122800.0, "f": 87500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "时光灰、雪域白"}, {"s": "比亚迪 第二代元PLUS智驾版", "m": "430KM超越型（暮云灰）", "v": "430KM超越型（暮云灰）", "e": "", "g": 122800.0, "f": 111400.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "滑雪白、攀岩灰、乐动米、越野绿"}, {"s": "比亚迪 第二代元PLUS智驾版", "m": "430KM领先型（暮云灰）", "v": "430KM领先型（暮云灰）", "e": "", "g": 115800.0, "f": 106000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "滑雪白、攀岩灰"}, {"s": "比亚迪 第二代元PLUS智驾版", "m": "510KM领先型（轻奢米双色）", "v": "510KM领先型（轻奢米双色）", "e": "", "g": 125800.0, "f": 113000.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "滑雪白、攀岩灰"}, {"s": "比亚迪 第二代秦PLUS DM-i智驾版", "m": "120KM超越型", "v": "120KM超越型", "e": "", "g": 103800.0, "f": 87700.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "冰珀青、时光灰、雪域白"}, {"s": "比亚迪 第二代秦PLUS DM-i智驾版", "m": "55KM超越型", "v": "55KM超越型", "e": "", "g": 93800.0, "f": 79350.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "冰珀青、时光灰、雪域白"}, {"s": "比亚迪 第二代秦PLUS DM-i智驾版", "m": "55KM领先型", "v": "55KM领先型", "e": "", "g": 79800.0, "f": 67500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "冰珀青、时光灰、雪域白、星河米"}, {"s": "比亚迪 驱逐舰05DMI（26年）", "m": "120KM 畅行版", "v": "120KM 畅行版", "e": "", "g": 121800.0, "f": 84500.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "雪域白（黑灰内饰）、时光灰（黑灰内饰）、魔域黑（黑灰内饰）"}, {"s": "比亚迪 驱逐舰05DMI（26年）", "m": "55KM 畅行版", "v": "55KM 畅行版", "e": "", "g": 101800.0, "f": 67600.0, "u": "RMB", "t": "FOB", "p": "南沙", "c": "雪域白（黑灰内饰）、时光灰（黑灰内饰）、魔域黑（黑灰内饰）"}];
+
+DATA.sort(function(a,b){return (a.s||'').localeCompare(b.s||'')||(a.m||'').localeCompare(b.m||'')});
+
+var page=0, PS=30;
+
+// 初始化品牌筛选
+(function(){
+  var bs={};
+  DATA.forEach(function(v){
+    var b=v.s.split(' ')[0];
+    if(b)bs[b]=1;
+  });
+  var sel=document.getElementById('fb');
+  Object.keys(bs).sort().forEach(function(b){
+    var o=document.createElement('option');
+    o.value=b;o.textContent=b;sel.appendChild(o);
+  });
+})();
+
+function render(){
+  var q=(document.getElementById('q').value||'').trim().toLowerCase();
+  var fb=document.getElementById('fb').value;
+  var fd=DATA;
+  if(q)fd=fd.filter(function(v){return(v.s+' '+v.m+' '+v.v+' '+v.e).toLowerCase().indexOf(q)>=0});
+  if(fb)fd=fd.filter(function(v){return v.s.indexOf(fb)===0});
+
+  // Stats
+  document.getElementById('stats').innerHTML=
+    '<div class="stat"><div class="v">'+fd.length+'</div><div class="l">匹配结果</div></div>'+
+    '<div class="stat"><div class="v">'+DATA.length+'</div><div class="l">总报价数</div></div>';
+
+  // 分页
+  var total=fd.length, start=page*PS, items=fd.slice(start,start+PS);
+  var list=document.getElementById('list'), empty=document.getElementById('empty');
+
+  if(!items.length){list.innerHTML='';empty.style.display='block'}else{empty.style.display='none'}
+
+  var ps='';
+  var html='';
+  items.forEach(function(v){
+    if(v.s!==ps){html+='<div class="gh">'+esc(v.s)+'</div>';ps=v.s}
+    var fob=v.f!=null?v.f.toLocaleString():'-';
+    var guide=v.g!=null?v.g.toLocaleString():null;
+    var us=v.u==='USD'?'$':'¥';
+    var tt=v.t==='CIF'?'<span class="tag t-cif">CIF</span>':v.t==='EXW'?'<span class="tag t-fob">EXW</span>':'<span class="tag t-fob">FOB</span>';
+    var ut=v.u==='USD'?'<span class="tag u-usd">USD</span>':'<span class="tag u-rmb">RMB</span>';
+    html+=
+      '<div class="card">'+
+        '<div class="top"><span class="m">'+esc(v.m||'-')+'</span><span class="fob">'+us+fob+'</span></div>'+
+        '<div class="info">'+
+          (v.v?'<span>'+esc(v.v)+'</span>':'')+
+          (v.e?'<span>'+esc(v.e)+'</span>':'')+
+          tt+ut+
+          (v.p?'<span>'+esc(v.p)+'</span>':'')+
+          (guide?'<span class="guide">'+us+guide+'</span>':'')+
+        '</div>'+
+        (v.c?'<div class="info" style="margin-top:2px"><span>🎨 '+esc(v.c)+'</span></div>':'')+
+      '</div>';
+  });
+  list.innerHTML=html;
+
+  // 分页器
+  var tp=Math.ceil(total/PS);
+  var pg=document.getElementById('pages');
+  if(tp<=1){pg.innerHTML='';return}
+  pg.innerHTML=
+    '<button '+(page<=0?'disabled':'')+' onclick="page=Math.max(0,page-1);render();window.scrollTo(0,0)">‹</button>'+
+    '<span>'+ (page+1)+'/'+tp+'</span>'+
+    '<button '+(page>=tp-1?'disabled':'')+' onclick="page=Math.min('+(tp-1)+',page+1);render();window.scrollTo(0,0)">›</button>';
+}
+
+function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
+
+render();
+</script>
+</body>
+</html>
