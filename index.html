@@ -124,7 +124,7 @@ function render(){
   pg.innerHTML=
     '<button '+(page<=0?'disabled':'')+' onclick="page=Math.max(0,page-1);render();window.scrollTo(0,0)">‹</button>'+
     '<span>'+ (page+1)+'/'+tp+'</span>'+
-    '<button '+(page>=tp-1?'disabled':'')+' onclick="page=Math.min(tp-1,page+1);render();window.scrollTo(0,0)">›</button>';
+    '<button '+(page>=tp-1?'disabled':'')+' onclick="page=Math.min('+(tp-1)+',page+1);render();window.scrollTo(0,0)">›</button>';
 }
 
 function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
